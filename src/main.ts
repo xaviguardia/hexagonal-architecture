@@ -16,6 +16,8 @@ import { InMemorySchemaRepository } from './infrastructure/persistence/InMemoryS
 import { GetOrderSchemaUseCase } from './application/use-cases/GetOrderSchemaUseCase';
 import { BpmnProcessAdapter } from './infrastructure/bpmn/BpmnProcessAdapter';
 import { ProcessOrderWorkflowUseCase } from './application/use-cases/ProcessOrderWorkflowUseCase';
+import { OtelTracingAdapter } from './infrastructure/observability/OtelTracingAdapter';
+import { withTracing } from './application/decorators/TracedUseCase';
 
 const orderRepository = new InMemoryOrderRepository();
 const notificationAdapter = new ConsoleNotificationAdapter();
@@ -36,12 +38,16 @@ const bpmnProcessAdapter = new BpmnProcessAdapter(
 );
 const processOrderWorkflow = new ProcessOrderWorkflowUseCase(bpmnProcessAdapter);
 
+const tracing = new OtelTracingAdapter('hexagonal-orders');
+const tracedCreateOrder = withTracing(createOrder, tracing, 'CreateOrderService');
+const tracedGetOrder = withTracing(getOrder, tracing, 'GetOrderService');
+
 const commandBus = new CommandBus();
 commandBus.use(loggingMiddleware);
 commandBus.use(validationMiddleware);
 
 const app = express();
 app.use(express.json());
-app.use('/orders', createOrderRouter(createOrder, getOrder, confirmOrder, cancelOrder, getOrderSchema));
+app.use('/orders', createOrderRouter(tracedCreateOrder, tracedGetOrder, confirmOrder, cancelOrder, getOrderSchema));
 
 app.listen(3000, () => console.log('Server running on http://localhost:3000'));
