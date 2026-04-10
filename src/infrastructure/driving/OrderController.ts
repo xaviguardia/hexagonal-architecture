@@ -1,14 +1,25 @@
 import { Router, Request, Response } from 'express';
 import { CreateOrderUseCase, GetOrderUseCase, ConfirmOrderUseCase, CancelOrderUseCase } from '../../domain/ports/input.ports';
 import { DomainError } from '../../domain/errors/DomainError';
+import { GetOrderSchemaUseCase } from '../../application/use-cases/GetOrderSchemaUseCase';
 
 export function createOrderRouter(
   createOrder: CreateOrderUseCase,
   getOrder: GetOrderUseCase,
   confirmOrder: ConfirmOrderUseCase,
   cancelOrder: CancelOrderUseCase,
+  getOrderSchema: GetOrderSchemaUseCase,
 ): Router {
   const router = Router();
+
+  router.get('/schema', async (_req: Request, res: Response) => {
+    try {
+      const schema = await getOrderSchema.execute();
+      res.json(schema);
+    } catch (e) {
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
 
   router.post('/', async (req: Request, res: Response) => {
     try {
