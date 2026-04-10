@@ -14,6 +14,8 @@ import { loggingMiddleware } from './application/bus/middleware/LoggingMiddlewar
 import { validationMiddleware } from './application/bus/middleware/ValidationMiddleware';
 import { InMemorySchemaRepository } from './infrastructure/persistence/InMemorySchemaRepository';
 import { GetOrderSchemaUseCase } from './application/use-cases/GetOrderSchemaUseCase';
+import { BpmnProcessAdapter } from './infrastructure/bpmn/BpmnProcessAdapter';
+import { ProcessOrderWorkflowUseCase } from './application/use-cases/ProcessOrderWorkflowUseCase';
 
 const orderRepository = new InMemoryOrderRepository();
 const notificationAdapter = new ConsoleNotificationAdapter();
@@ -27,6 +29,12 @@ const cancelOrder = new CancelOrderService(orderRepository, notificationAdapter,
 
 const schemaRepository = new InMemorySchemaRepository();
 const getOrderSchema = new GetOrderSchemaUseCase(schemaRepository);
+
+const bpmnProcessAdapter = new BpmnProcessAdapter(
+  async (ctx) => { console.log('Validating order', ctx['orderId']); },
+  async (ctx) => { console.log('Processing payment for order', ctx['orderId']); },
+);
+const processOrderWorkflow = new ProcessOrderWorkflowUseCase(bpmnProcessAdapter);
 
 const commandBus = new CommandBus();
 commandBus.use(loggingMiddleware);

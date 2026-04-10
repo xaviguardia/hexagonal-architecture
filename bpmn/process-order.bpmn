@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             targetNamespace="http://hexagonal.example">
+  <process id="process-order" isExecutable="true">
+    <startEvent id="start" name="Order received" />
+    <sequenceFlow id="sf1" sourceRef="start" targetRef="validate" />
+    <serviceTask id="validate" name="Validate Order"
+                 implementation="${environment.services.validate}" />
+    <sequenceFlow id="sf2" sourceRef="validate" targetRef="payment" />
+    <serviceTask id="payment" name="Process Payment"
+                 implementation="${environment.services.payment}" />
+    <sequenceFlow id="sf3" sourceRef="payment" targetRef="end" />
+    <endEvent id="end" name="Order processed" />
+  </process>
+</definitions>
