@@ -2,6 +2,10 @@ import { DomainError } from '../errors/DomainError';
 import { OrderId } from '../value-objects/OrderId';
 import { CustomerId } from '../value-objects/CustomerId';
 import { Money } from '../value-objects/Money';
+import { DomainEvent } from '../events/DomainEvent';
+import { OrderCreatedEvent } from '../events/OrderCreatedEvent';
+import { OrderConfirmedEvent } from '../events/OrderConfirmedEvent';
+import { OrderCancelledEvent } from '../events/OrderCancelledEvent';
 
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'CANCELLED';
 
@@ -13,6 +17,8 @@ export interface OrderItem {
 }
 
 export class Order {
+  private _domainEvents: DomainEvent[] = [];
+
   constructor(
     public readonly id: OrderId,
     public readonly customerId: CustomerId,
@@ -29,11 +35,18 @@ export class Order {
     );
   }
 
+  pullDomainEvents(): DomainEvent[] {
+    const events = [...this._domainEvents];
+    this._domainEvents = [];
+    return events;
+  }
+
   confirm(): void {
     if (this.status !== 'PENDING') {
       throw new DomainError('INVALID_STATUS', `Cannot confirm order in status: ${this.status}`);
     }
     this.status = 'CONFIRMED';
+    this._domainEvents.push(new OrderConfirmedEvent(this.id));
   }
 
   cancel(): void {
@@ -44,6 +57,7 @@ export class Order {
       throw new DomainError('ALREADY_CANCELLED', 'Order is already cancelled');
     }
     this.status = 'CANCELLED';
+    this._domainEvents.push(new OrderCancelledEvent(this.id));
   }
 
   static create(id: OrderId, customerId: CustomerId, items: OrderItem[]): Order {
@@ -53,6 +67,8 @@ export class Order {
     if (items.some(i => i.quantity <= 0)) {
       throw new DomainError('INVALID_QUANTITY', 'All items must have a positive quantity');
     }
-    return new Order(id, customerId, items, 'PENDING', new Date());
+    const order = new Order(id, customerId, items, 'PENDING', new Date());
+    order._domainEvents.push(new OrderCreatedEvent(id, customerId));
+    return order;
   }
 }

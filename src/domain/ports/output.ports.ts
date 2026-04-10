@@ -1,5 +1,6 @@
 import { Order } from '../model/Order';
 import { OrderId } from '../value-objects/OrderId';
+import { DomainEvent } from '../events/DomainEvent';
 
 export interface OrderRepository {
   save(order: Order): Promise<void>;
@@ -11,4 +12,8 @@ export interface NotificationPort {
   notifyOrderCreated(order: Order): Promise<void>;
   notifyOrderCancelled(order: Order): Promise<void>;
   notifyOrderConfirmed(order: Order): Promise<void>;
+}
+
+export interface EventBus {
+  publish(events: DomainEvent[]): Promise<void>;
 }

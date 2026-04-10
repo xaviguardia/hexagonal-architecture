@@ -4,12 +4,13 @@ import { OrderId } from '../../domain/value-objects/OrderId';
 import { CustomerId } from '../../domain/value-objects/CustomerId';
 import { Money } from '../../domain/value-objects/Money';
 import { CreateOrderCommand, CreateOrderUseCase } from '../../domain/ports/input.ports';
-import { NotificationPort, OrderRepository } from '../../domain/ports/output.ports';
+import { NotificationPort, OrderRepository, EventBus } from '../../domain/ports/output.ports';
 
 export class CreateOrderService implements CreateOrderUseCase {
   constructor(
     private readonly orderRepository: OrderRepository,
     private readonly notificationPort: NotificationPort,
+    private readonly eventBus: EventBus,
   ) {}
 
   async execute(command: CreateOrderCommand): Promise<Order> {
@@ -25,6 +26,7 @@ export class CreateOrderService implements CreateOrderUseCase {
     );
     await this.orderRepository.save(order);
     await this.notificationPort.notifyOrderCreated(order);
+    await this.eventBus.publish(order.pullDomainEvents());
     return order;
   }
 }
