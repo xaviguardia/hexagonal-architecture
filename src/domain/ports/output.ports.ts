@@ -17,3 +17,10 @@ export interface NotificationPort {
 export interface EventBus {
   publish(events: DomainEvent[]): Promise<void>;
 }
+
+export interface UnitOfWork {
+  begin(): Promise<void>;
+  commit(): Promise<void>;
+  rollback(): Promise<void>;
+  orders: OrderRepository;
+}
