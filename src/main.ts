@@ -7,6 +7,9 @@ import { GetOrderService } from './application/services/GetOrderService';
 import { ConfirmOrderService } from './application/services/ConfirmOrderService';
 import { CancelOrderService } from './application/services/CancelOrderService';
 import { createOrderRouter } from './infrastructure/driving/OrderController';
+import { CommandBus } from './application/bus/CommandBus';
+import { loggingMiddleware } from './application/bus/middleware/LoggingMiddleware';
+import { validationMiddleware } from './application/bus/middleware/ValidationMiddleware';
 
 const orderRepository = new InMemoryOrderRepository();
 const notificationAdapter = new ConsoleNotificationAdapter();
@@ -16,6 +19,10 @@ const createOrder = new CreateOrderService(orderRepository, notificationAdapter,
 const getOrder = new GetOrderService(orderRepository);
 const confirmOrder = new ConfirmOrderService(orderRepository, notificationAdapter, eventBus);
 const cancelOrder = new CancelOrderService(orderRepository, notificationAdapter, eventBus);
+
+const commandBus = new CommandBus();
+commandBus.use(loggingMiddleware);
+commandBus.use(validationMiddleware);
 
 const app = express();
 app.use(express.json());
