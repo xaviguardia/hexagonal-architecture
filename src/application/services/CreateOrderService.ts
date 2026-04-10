@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { Order } from '../../domain/model/Order';
 import { OrderId } from '../../domain/value-objects/OrderId';
 import { CustomerId } from '../../domain/value-objects/CustomerId';
@@ -15,7 +15,7 @@ export class CreateOrderService implements CreateOrderUseCase {
 
   async execute(command: CreateOrderCommand): Promise<Order> {
     const order = Order.create(
-      OrderId.create(uuidv4()),
+      OrderId.create(randomUUID()),
       CustomerId.create(command.customerId),
       command.items.map(i => ({
         productId: i.productId,
