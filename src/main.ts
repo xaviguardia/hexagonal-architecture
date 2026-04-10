@@ -2,6 +2,8 @@ import express from 'express';
 import { InMemoryOrderRepository } from './infrastructure/driven/InMemoryOrderRepository';
 import { ConsoleNotificationAdapter } from './infrastructure/driven/ConsoleNotificationAdapter';
 import { ConsoleEventBus } from './infrastructure/driven/ConsoleEventBus';
+import { StripePaymentGateway } from './infrastructure/driven/StripePaymentGateway';
+import { CircuitBreakerPaymentGateway } from './infrastructure/driven/CircuitBreakerPaymentGateway';
 import { CreateOrderService } from './application/services/CreateOrderService';
 import { GetOrderService } from './application/services/GetOrderService';
 import { ConfirmOrderService } from './application/services/ConfirmOrderService';
@@ -14,6 +16,7 @@ import { validationMiddleware } from './application/bus/middleware/ValidationMid
 const orderRepository = new InMemoryOrderRepository();
 const notificationAdapter = new ConsoleNotificationAdapter();
 const eventBus = new ConsoleEventBus();
+const paymentGateway = new CircuitBreakerPaymentGateway(new StripePaymentGateway());
 
 const createOrder = new CreateOrderService(orderRepository, notificationAdapter, eventBus);
 const getOrder = new GetOrderService(orderRepository);

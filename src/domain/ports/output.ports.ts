@@ -24,3 +24,13 @@ export interface UnitOfWork {
   rollback(): Promise<void>;
   orders: OrderRepository;
 }
+
+export interface PaymentResult {
+  success: boolean;
+  transactionId?: string;
+  errorCode?: string;
+}
+
+export interface PaymentGateway {
+  charge(customerId: string, amount: number, currency: string): Promise<PaymentResult>;
+}
