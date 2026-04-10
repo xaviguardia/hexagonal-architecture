@@ -1,4 +1,7 @@
 import { DomainError } from '../errors/DomainError';
+import { OrderId } from '../value-objects/OrderId';
+import { CustomerId } from '../value-objects/CustomerId';
+import { Money } from '../value-objects/Money';
 
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'CANCELLED';
 
@@ -6,20 +9,24 @@ export interface OrderItem {
   productId: string;
   name: string;
   quantity: number;
-  unitPrice: number;
+  unitPrice: Money;
 }
 
 export class Order {
   constructor(
-    public readonly id: string,
-    public readonly customerId: string,
+    public readonly id: OrderId,
+    public readonly customerId: CustomerId,
     public readonly items: OrderItem[],
     public status: OrderStatus,
     public readonly createdAt: Date,
   ) {}
 
-  get total(): number {
-    return this.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  get total(): Money {
+    if (this.items.length === 0) return Money.of(0, 'EUR');
+    return this.items.reduce(
+      (sum, item) => sum.add(Money.of(item.unitPrice.amount * item.quantity, item.unitPrice.currency)),
+      Money.of(0, this.items[0].unitPrice.currency),
+    );
   }
 
   confirm(): void {
@@ -31,7 +38,7 @@ export class Order {
 
   cancel(): void {
     if (this.status === 'SHIPPED') {
-      throw new DomainError('ALREADY_SHIPPED', 'Cannot cancel an order that has been shipped');
+      throw new DomainError('ALREADY_SHIPPED', 'Cannot cancel a shipped order');
     }
     if (this.status === 'CANCELLED') {
       throw new DomainError('ALREADY_CANCELLED', 'Order is already cancelled');
@@ -39,7 +46,7 @@ export class Order {
     this.status = 'CANCELLED';
   }
 
-  static create(id: string, customerId: string, items: OrderItem[]): Order {
+  static create(id: OrderId, customerId: CustomerId, items: OrderItem[]): Order {
     if (items.length === 0) {
       throw new DomainError('NO_ITEMS', 'An order must have at least one item');
     }
